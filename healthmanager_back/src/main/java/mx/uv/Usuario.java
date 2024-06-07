@@ -17,6 +17,10 @@ public class Usuario {
         this.contraseña = contraseña;
         this.esMedico = esMedico;
     }
+
+    public Usuario(boolean esMedico){
+        this.esMedico = esMedico;
+    }
     public int getIdUsuario() {
         return idUsuario;
     }

@@ -119,18 +119,19 @@ public class DaoUsuario implements IDaoUsuario{
         return respuesta;
     }
 
-    public static boolean esMedico(String correo, String contraseña) throws SQLException{
-        boolean respuesta = false;
+    public static Usuario esMedico(String correo) throws SQLException{
         Connection conn = con.obtenerConexion();
+        Usuario usuario = null;
         try {
             Statement st = conn.createStatement();
-            ResultSet rs = st.executeQuery("SELECT esMedico FROM Usuario WHERE correo='" + correo + "' AND contrasena='" + contraseña + "'AND esMedico='1';");        
-            //ResultSet rs = st.executeQuery("SELECT correo FROM usuario WHERE correo='" + correo + "';");
-            if (rs.next()) {
-                respuesta = true;
+            System.out.println(correo);
+            ResultSet rs = st.executeQuery("SELECT esMedico FROM Usuario WHERE correo='" + correo + "';");
+            while (rs.next()) {
+                usuario = new Usuario(rs.getBoolean("esMedico"));
             }
+            System.out.println(usuario.esMedico()+" "+" es medico");
         } catch (Exception ex) {
-            System.out.println("Error al iniciar sesion: " + ex.toString());
+            System.out.println("Error al obtener datos del usuario: " + ex.toString());
         }finally {
             try {
                 conn.close();
@@ -138,7 +139,7 @@ public class DaoUsuario implements IDaoUsuario{
                 System.out.println(e);
             }
         }
-        return respuesta;
+        return usuario;
     }
     
 

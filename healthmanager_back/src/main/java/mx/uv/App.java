@@ -2,7 +2,12 @@ package mx.uv;
 
 import com.google.gson.JsonObject;
 import static spark.Spark.*;
+
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.eclipse.jetty.websocket.api.Session;
 import com.google.gson.Gson;
 
 /**
@@ -13,8 +18,11 @@ public class App
 {
     static Gson gson = new Gson();
     static HashMap<String, Usuario> usuarios = new HashMap<>();
+    static Map<Session, String> userUsernameMap = new ConcurrentHashMap<>();
+    static int nextUserNumber = 1; //Used for creating the next username
     public static void main( String[] args )
     {
+        webSocket("/chat", ChatWebSocketHandler.class);
         System.out.println( "HEALTH MANAGER BACK END CORRIENDO..." );
 
         //CORS
@@ -43,15 +51,10 @@ public class App
             Usuario usuario = gson.fromJson(payload, Usuario.class);
             System.out.println("usuario " + usuario.getCorreo()+ " " + usuario.getContraseña());
             boolean respuesta = DaoUsuario.estaRegistrado(usuario.getCorreo(), usuario.getContraseña());
-            boolean respuestaMedico = usuario.esMedico();
             System.out.println(respuesta);
-            System.out.println(respuestaMedico);
             if (respuesta == true) {
                 System.out.println("Usuario Correcto");
                 mensaje = "Usuario Correcto";
-                /*if(respuestaMedico == true){
-                    mensaje = "Usuario Medico";
-                }*/
             } else {
                 System.out.println("Usuario incorrecto");
                 mensaje = "Usuario incorrecto";
@@ -59,23 +62,10 @@ public class App
             return mensaje;
         });
 
-        post("/validacionMedico", (request, response) -> {
-            response.type("application/json");
-            String payload = request.body();
-            String mensaje = "";
-            Usuario usuario = gson.fromJson(payload, Usuario.class);
-            System.out.println("usuario " + usuario.getCorreo() + usuario.getContraseña() + usuario.esMedico());
-            boolean respuesta = DaoUsuario.estaRegistrado(usuario.getCorreo(), usuario.getContraseña());
-            System.out.println(respuesta);
-            if (respuesta == true) {
-                System.out.println("Usuario Correcto");
-                
-                mensaje = "Usuario Correcto";
-            } else {
-                System.out.println("Usuario incorrecto");
-                mensaje = "Usuario incorrecto";
-            }
-            return mensaje;
+        get("/validacionMedico", (request, response2) -> {
+            String correo = request.queryParams("correo");
+            response2.type("application/json");
+            return gson.toJson(DaoUsuario.esMedico(correo));
         });
 
         get("/datosUsuario", (request, response) -> {
@@ -102,7 +92,6 @@ public class App
             Receta receta = gson.fromJson(payload, Receta.class);
             System.out.println("payload " + payload);
             String respuesta = DaoReceta.realizarReceta(receta);
-
             return respuesta;
         });
 
@@ -128,8 +117,8 @@ public class App
             Usuario usuario = gson.fromJson(payload, Usuario.class);
             System.out.println("payload " + payload);
             String respuesta = DaoUsuario.agregarUsuario(usuario);
-
             return respuesta;
         });
+
     }
 }
